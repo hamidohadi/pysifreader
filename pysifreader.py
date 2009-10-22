@@ -114,7 +114,7 @@ class SIFimage:
 		print 'Image limits (x1, y1, first image; x2, y2, last image): (%d, %d, %d; %d, %d, %d)' % (self.imageArea[0][0], self.imageArea[0][1], self.imageArea[0][2], self.imageArea[1][0], self.imageArea[1][1], self.imageArea[1][2])
 
 	def __init__(self):
-		from pylab import array
+		from pylab import array as p_array
 		self.temperature = 0
 		self.exposureTime = 0.
 		self.cycleTime = 0.
@@ -128,7 +128,6 @@ class SIFimage:
 		self.detectorType = ''
 		self.detectorSize = [0, 0]
 		self.fileName = ''
-
 		self.frameAxis = ''
 		self.dataType = ''
 		self.imageAxis = ''
@@ -136,15 +135,13 @@ class SIFimage:
 		self.frameArea = [[0, 0], [0, 0]]
 		self.frameBins = [0, 0]
 		self.timeStamp = 0
-		self.imageData = array([])
+		self.imageData = p_array([])
 
 def sifread(file):
-	from array import array as p_array
-	from os import path, remove, SEEK_CUR
-	from pylab import array
-
-	import pipes
-	import tempfile
+	from os import path, SEEK_CUR
+	from pylab import array as p_array
+	from sys import exit
+	import array
 
 	def readLine(file):
 		t = ' '
@@ -162,9 +159,8 @@ def sifread(file):
 			f.close()
 			error('Inconsistent image header.')
 	def error(s):
-		import sys
 		print('Error: %s' % s)
-		sys.exit()
+		exit()
 
 	def readSection():
 		def readString():
@@ -208,11 +204,11 @@ def sifread(file):
 		o = skipandread().split()
 		image.fileName = o[0]
 		for n in range(3):
-			o = skipandread().split()
+			o = skipandread()
 		o = toint(skipandread().split())
 		image.shutterTime = o[4:6]
 		for n in range(15):
-			o = skipandread().split()
+			o = skipandread()
 		image.frameAxis = readString()
 		image.dataType = readString()
 		image.imageAxis = readString()
@@ -229,13 +225,13 @@ def sifread(file):
 			error('Inconsistent image header.')
 		for n in range(z):
 			o = readString()
-		o = p_array('i')
+		o = array.array('i')
 		o.fromfile(f, 1)
 		image.timeStamp = o.tolist()[0]
 		f.seek(-4, SEEK_CUR)
-		o = p_array('f')
+		o = array.array('f')
 		o.fromfile(f, s*z)
-		image.imageData = array(o.tolist()).reshape(image.frameArea[1][0], image.frameArea[1][1], z)
+		image.imageData = p_array(o.tolist()).reshape(image.frameArea[1][0], image.frameArea[1][1], z)
 		readString()
 		o = skipandread().split()
 		next = int(o[0])
