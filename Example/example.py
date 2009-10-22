@@ -8,7 +8,7 @@ from pylab import *
 pixels = data.imageData[:,:,0] - back.imageData[:,:,0]
 
 # Print some information about the main (data) image
-print data.printInfo()
+data.printInfo()
 
 # Display the image
 matshow(pixels)

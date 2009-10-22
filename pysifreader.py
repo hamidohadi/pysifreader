@@ -32,8 +32,11 @@
 
 # pysifreader: Read Andor SIF multi-channel image file.
 #
-# Date: 22nd October, 2009
-# Version: 1.0
+# Date: 23nd October, 2009
+# Version: 1.0.1
+# History:
+#  1.0   -- 22/10/09 -- Initial release
+#  1.0.1 -- 23/10/09 -- Streamlined and made code more portable
 #
 # Usage:
 #     [data, back, ref] = SIFread(filename)
@@ -86,29 +89,29 @@
 
 class SIFimage:
 	def printInfo(self):
-		print "Temperature: %d deg. C" % self.temperature
-		print "Exposure time: %f s" % self.exposureTime
-		print "Time per full image take: %f s" % self.cycleTime
-		print "Number of accumulation cycles: %d" % self.accumulateCycles
-		print "Time per accumulated image: %f s" % self.accumulateCycleTime
-		print "Interval in image series: %f s" % self.stackCycleTime
-		print "Time per pixel readout: %f s" % self.pixelReadoutTime
-		print "DAC gain: %f" % self.gainDAC
-		print "Time to open/close the shutter: %f s/%f s" % (self.shutterTime[0], self.shutterTime[1])
+		print 'Temperature: %d deg. C' % self.temperature
+		print 'Exposure time: %f s' % self.exposureTime
+		print 'Time per full image take: %f s' % self.cycleTime
+		print 'Number of accumulation cycles: %d' % self.accumulateCycles
+		print 'Time per accumulated image: %f s' % self.accumulateCycleTime
+		print 'Interval in image series: %f s' % self.stackCycleTime
+		print 'Time per pixel readout: %f s' % self.pixelReadoutTime
+		print 'DAC gain: %f' % self.gainDAC
+		print 'Time to open/close the shutter: %f s/%f s' % (self.shutterTime[0], self.shutterTime[1])
 		print
-		print "CCD type: %s" % self.detectorType
-		print "Number of read CCD pixels (x, y): (%d, %d)" % (self.detectorSize[0], self.detectorSize[1])
+		print 'CCD type: %s' % self.detectorType
+		print 'Number of read CCD pixels (x, y): (%d, %d)' % (self.detectorSize[0], self.detectorSize[1])
 		print
-		print "File name: %s" % self.fileName
-		print "Sequence number: %d" % self.seqNum
-		print "Axis unit of CCD frame: %s" % self.frameAxis
-		print "Type of image data: %s" % self.dataType
-		print "Axis unit of image: %s" % self.imageAxis
-		print "Time stamp in image series: %d" % self.timeStamp
+		print 'File name: %s' % self.fileName
+		print 'Sequence number: %d' % self.seqNum
+		print 'Axis unit of CCD frame: %s' % self.frameAxis
+		print 'Type of image data: %s' % self.dataType
+		print 'Axis unit of image: %s' % self.imageAxis
+		print 'Time stamp in image series: %d' % self.timeStamp
 		print
-		print "Binned pixels (x, y): (%d, %d)" % (self.frameBins[0], self.frameBins[1])
-		print "Frame limits (x1, y1; x2, y2): (%d, %d; %d, %d)" % (self.frameArea[0][0], self.frameArea[0][1], self.frameArea[1][0], self.frameArea[1][1])
-		print "Image limits (x1, y1, first image; x2, y2, last image): (%d, %d, %d; %d, %d, %d)" % (self.imageArea[0][0], self.imageArea[0][1], self.imageArea[0][2], self.imageArea[1][0], self.imageArea[1][1], self.imageArea[1][2])
+		print 'Binned pixels (x, y): (%d, %d)' % (self.frameBins[0], self.frameBins[1])
+		print 'Frame limits (x1, y1; x2, y2): (%d, %d; %d, %d)' % (self.frameArea[0][0], self.frameArea[0][1], self.frameArea[1][0], self.frameArea[1][1])
+		print 'Image limits (x1, y1, first image; x2, y2, last image): (%d, %d, %d; %d, %d, %d)' % (self.imageArea[0][0], self.imageArea[0][1], self.imageArea[0][2], self.imageArea[1][0], self.imageArea[1][1], self.imageArea[1][2])
 
 	def __init__(self):
 		from pylab import array
@@ -122,12 +125,13 @@ class SIFimage:
 		self.gainDAC = 0.
 		self.seqNum = 0
 		self.shutterTime = [0., 0.]
-		self.detectorType = ""
+		self.detectorType = ''
 		self.detectorSize = [0, 0]
-		self.fileName = ""
-		self.frameAxis = ""
-		self.dataType = ""
-		self.imageAxis = ""
+		self.fileName = ''
+
+		self.frameAxis = ''
+		self.dataType = ''
+		self.imageAxis = ''
 		self.imageArea = [[0, 0, 0], [0, 0, 0]]
 		self.frameArea = [[0, 0], [0, 0]]
 		self.frameBins = [0, 0]
@@ -142,21 +146,32 @@ def sifread(file):
 	import pipes
 	import tempfile
 
+	def readLine(file):
+		t = ' '
+		s = ''
+		while len(t) > 0:
+			t = file.read(1)
+			if (len(t) >= 1) and (ord(t[0]) >= 32):
+				s += t[0]
+			else:
+				t = ''
+		return s
+
 	def skipLine():
-		if f.readline() == "":
+		if readLine(f) == '':
 			f.close()
 			error('Inconsistent image header.')
 	def error(s):
 		import sys
-		print("Error: %s" % s)
+		print('Error: %s' % s)
 		sys.exit()
 
 	def readSection():
 		def readString():
-			s = f.readline().strip()
+			s = readLine(f).strip()
 			n = int(s)
 			s = f.read(n)
-			if ((n > 0) and (s == "")) or (n < 0):
+			if ((n > 0) and (s == '')) or (n < 0):
 				f.close()
 				error('Inconsistent string.')
 			return s
@@ -172,9 +187,9 @@ def sifread(file):
 			return o
 
 		def skipandread():
-			s = ""
-			while (s == ""):
-				s = f.readline().strip()
+			s = ''
+			while (s == ''):
+				s = readLine(f).strip()
 			return s
 
 		image = SIFimage()
@@ -214,18 +229,12 @@ def sifread(file):
 			error('Inconsistent image header.')
 		for n in range(z):
 			o = readString()
-			if (o != ""):
-				print o + "\n"
 		o = p_array('i')
-		g = open(file, 'rb')
-		g.seek(f.tell())
-		o.fromfile(g, 1)
+		o.fromfile(f, 1)
 		image.timeStamp = o.tolist()[0]
-		g.seek(-4, SEEK_CUR)
+		f.seek(-4, SEEK_CUR)
 		o = p_array('f')
-		o.fromfile(g, s*z)
-		f.seek(g.tell())
-		g.close()
+		o.fromfile(f, s*z)
 		image.imageData = array(o.tolist()).reshape(image.frameArea[1][0], image.frameArea[1][1], z)
 		readString()
 		o = skipandread().split()
@@ -233,19 +242,13 @@ def sifread(file):
 		return [image, next]
 
 	if not path.exists(file):
-		error("File (%s) does not exist." % file)
+		error('File (%s) does not exist.' % file)
 
-	f = tempfile.NamedTemporaryFile(delete=False)
-	fname = f.name
-	f.close()
-	p = pipes.Template()
-	p.append('tr "[:cntrl:]" "\\n"', '--')
-	p.copy(file, fname)
-
-	f = open(fname,'rb')
+	f = open(file, 'rb')
 	if f < 0:
 		error('Could not open the file.')
-	if not (f.readline() == 'Andor Technology Multi-Channel File\n'):		f.close()
+	if not (readLine(f) == 'Andor Technology Multi-Channel File'):
+		f.close()
 		error('Not an Andor SIF image file.')
 	skipLine()
 	[data,next] = readSection()
@@ -264,7 +267,5 @@ def sifread(file):
 		back = SIFimage()
 		ref = copy(back)
 	f.close()
-
-	remove(fname)
 
 	return [data, back, ref]
